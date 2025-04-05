@@ -1,4 +1,3 @@
-// components/UsageTableSort.tsx
 import { useEffect, useState } from "react";
 import {
   Table,
@@ -11,7 +10,6 @@ import {
   rem,
   Badge,
   Button,
-  Container,
 } from "@mantine/core";
 import {
   IconSelector,
@@ -61,34 +59,46 @@ function Th({ children, reversed, sorted, onSort }: ThProps) {
 
 function filterData(data: UsageLog[], search: string) {
   const query = search.toLowerCase().trim();
-  return data.filter((item) =>
-    Object.values(item).some((value) => {
-      if (Array.isArray(value))
-        return value.join(", ").toLowerCase().includes(query);
-      return String(value).toLowerCase().includes(query);
-    })
-  );
+  return data.filter((item) => {
+    const searchValues = [
+      item.user.toLowerCase(),
+      item.item.toLowerCase(),
+      item.serialNumbers.join(", ").toLowerCase(),
+      new Date(item.date).toLocaleDateString().toLowerCase(),
+      item.action.toLowerCase(),
+      item.expectedReturnDate
+        ? new Date(item.expectedReturnDate).toLocaleDateString().toLowerCase()
+        : "",
+    ];
+    return searchValues.some((value) => value.includes(query));
+  });
 }
 
 function sortData(
   data: UsageLog[],
   payload: { sortBy: keyof UsageLog | null; reversed: boolean; search: string }
 ) {
-  const { sortBy } = payload;
+  const filteredData = filterData(data, payload.search);
+  const { sortBy, reversed } = payload;
 
-  if (!sortBy) {
-    return filterData(data, payload.search);
-  }
+  if (!sortBy) return filteredData;
 
-  return filterData(
-    [...data].sort((a, b) => {
-      if (payload.reversed) {
-        return String(b[sortBy]).localeCompare(String(a[sortBy]));
-      }
-      return String(a[sortBy]).localeCompare(String(b[sortBy]));
-    }),
-    payload.search
-  );
+  return [...filteredData].sort((a, b) => {
+    const getValue = (item: UsageLog) => {
+      const value = item[sortBy];
+      if (value instanceof Date) return value.getTime();
+      if (Array.isArray(value)) return value.join(", ");
+      return String(value).toLowerCase();
+    };
+
+    const aValue = getValue(a);
+    const bValue = getValue(b);
+
+    if (reversed) {
+      return aValue > bValue ? -1 : 1;
+    }
+    return aValue > bValue ? 1 : -1;
+  });
 }
 
 export default function UsageTableSort({
@@ -149,7 +159,9 @@ export default function UsageTableSort({
   };
 
   useEffect(() => {
-    setSortedData(data);
+    setSortedData(
+      sortData(data, { sortBy, reversed: reverseSortDirection, search })
+    );
   }, [data]);
 
   const rows = sortedData.map((log) => (
@@ -173,11 +185,11 @@ export default function UsageTableSort({
 
   return (
     <ScrollArea type="auto" w="75vw" mx="-md" px="md">
-      <Group justify="space-Around" mb="xl">
+      <Group justify="space-between" mb="xl">
         {enableSearchBar && (
           <TextInput
-            w="60vw"
-            placeholder="Search by any field"
+            w="60%"
+            placeholder="Search by user, item, serial numbers, date, or action"
             leftSection={
               <IconSearch
                 style={{ width: rem(16), height: rem(16) }}
@@ -192,9 +204,9 @@ export default function UsageTableSort({
           leftSection={<IconDownload size={18} />}
           onClick={handleDownloadPDF}
           variant="outline"
-          w="10vw"
+          w="15rem"
         >
-          Export PDF
+          Export as PDF
         </Button>
       </Group>
       <Table
@@ -257,7 +269,7 @@ export default function UsageTableSort({
             <Table.Tr>
               <Table.Td colSpan={6}>
                 <Text fw={500} ta="center">
-                  No usage logs found
+                  No matching records found
                 </Text>
               </Table.Td>
             </Table.Tr>

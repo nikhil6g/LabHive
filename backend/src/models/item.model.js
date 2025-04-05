@@ -6,8 +6,8 @@ const instanceSchema = new mongoose.Schema(
     serialNumber: { type: String, required: true, unique: true },
     status: {
       type: String,
-      enum: ["available", "borrowed", "reserved", "maintenance"],
-      default: "available",
+      enum: ["Available", "Borrowed", "Reserved", "Maintenance"],
+      default: "Available",
     },
   },
   { _id: false }

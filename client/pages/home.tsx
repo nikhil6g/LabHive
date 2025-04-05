@@ -31,7 +31,7 @@ export default function Homepage({
       const token = localStorage.getItem("token");
 
       if (!token) {
-        router.replace("/login");
+        router.push("/login");
       }
       const res = await fetch(backendURL + pathname, {
         method: "GET",
@@ -51,17 +51,17 @@ export default function Homepage({
     toggleLoader(true);
     try {
       // fetch data as dictionaries
-      // const fetchedRecentItems = await fetchDataAt("/items/recent/3");
-      // const itemTotal = await fetchDataAt("/items/total");
-      // const categoriesTotal = await fetchDataAt("/categories/total");
+      const fetchedRecentItems = await fetchDataAt("/api/items/recent/3");
+      const itemTotal = await fetchDataAt("/api/items/total");
+      const categoriesTotal = await fetchDataAt("/api/categories/total");
       const itemsByCategory = await fetchDataAt(
         "/api/items/grouped-by-category"
       );
       const itemsByStatus = await fetchDataAt("/api/items/grouped-by-status");
 
-      // if (fetchedRecentItems) setRecentItems(fetchedRecentItems);
-      // if (itemTotal) setTotalItems(itemTotal);
-      // if (categoriesTotal) setTotalCategories(categoriesTotal);
+      if (fetchedRecentItems) setRecentItems(fetchedRecentItems);
+      if (itemTotal) setTotalItems(itemTotal);
+      if (categoriesTotal) setTotalCategories(categoriesTotal);
 
       setPieData([
         itemsByStatus.map((e: any) => e.status),

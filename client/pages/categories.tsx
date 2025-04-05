@@ -17,7 +17,7 @@ export default function Categories({
   async function fetchCategories() {
     const token = localStorage.getItem("token");
     if (!token) {
-      router.replace("/login");
+      router.push("/login");
     }
     toggleLoader(true);
     try {
@@ -44,7 +44,7 @@ export default function Categories({
   async function deleteCategory(category: Category) {
     const token = localStorage.getItem("token");
     if (!token) {
-      router.replace("/login");
+      router.push("/login");
     }
     // ask for admin password
     const password = prompt("Enter admin password");

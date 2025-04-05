@@ -119,7 +119,7 @@ export default function ItemForm({ backendURL, displayError }: appProps) {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        router.replace("/login");
+        router.push("/login");
       }
       const res = await fetch(`${backendURL}/api/categories/categories`, {
         method: "GET",

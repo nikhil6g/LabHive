@@ -5,11 +5,13 @@ import {
   update_category,
   delete_category,
   fetch_category,
+  getTotalCategoryCount,
 } from "../controllers/category.controller.js";
 import { adminOnly, protectRoute } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
+router.get("/total", protectRoute, getTotalCategoryCount);
 router.get("/categories", protectRoute, category_list);
 router.get("/get/:categoryId", protectRoute, fetch_category);
 router.post("/create", protectRoute, adminOnly, create_category);

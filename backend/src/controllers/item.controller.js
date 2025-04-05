@@ -31,7 +31,7 @@ export const addNewItem = async (req, res) => {
     for (let i = 0; i < totalQuantity; i++) {
       // Create a unique serial number using a prefix (first 3 letters of the name) and a UUID
       const serialNumber = `${name.substring(0, 3).toUpperCase()}-${uuidv4()}`;
-      instances.push({ serialNumber, status: "available" });
+      instances.push({ serialNumber, status: "Available" });
     }
     console.log(req.body);
     // Create the new item with availableQuantity set equal to totalQuantity
@@ -239,7 +239,8 @@ export const updateStatus = async (req, res) => {
 
 export const allocateItem = async (req, res) => {
   const { itemId } = req.params;
-  const { userId } = req.body;
+  const userId = req.body.userId ? req.body.userId : req.user._id;
+  const serialNumber = req.body.serialNumber;
 
   if (!mongoose.Types.ObjectId.isValid(userId)) {
     return res.status(400).json({ error: "Invalid user ID" });
@@ -256,16 +257,27 @@ export const allocateItem = async (req, res) => {
       return res.status(404).json({ error: "Item not found" });
     }
 
-    // Find an available instance
-    const availableInstance = item.instances.find(
-      (inst) => inst.status === "available"
-    );
+    let availableInstance;
+
+    if (serialNumber) {
+      availableInstance = item.instances.find(
+        (inst) => inst.serialNumber === serialNumber
+      );
+      if (availableInstance.status !== "Available") {
+        availableInstance = null;
+      }
+    } else {
+      availableInstance = item.instances.find(
+        (inst) => inst.status === "Available"
+      );
+    }
+
     if (!availableInstance) {
       return res.status(400).json({ error: "No available instances" });
     }
 
     // Update instance status to "borrowed"
-    availableInstance.status = "borrowed";
+    availableInstance.status = "Borrowed";
     item.availableQuantity--;
 
     await item.save();
@@ -275,7 +287,7 @@ export const allocateItem = async (req, res) => {
       user: userId,
       item: itemId,
       serialNumbers: [availableInstance.serialNumber],
-      action: "borrowed",
+      action: "Borrowed",
       expectedReturnDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default: 7-day return period
     });
 
@@ -297,7 +309,8 @@ export const allocateItem = async (req, res) => {
 
 export const returnItem = async (req, res) => {
   const { serialForReturn } = req.params;
-  const { userId, itemId } = req.body;
+  const itemId = req.body.itemId;
+  const userId = req.body.userId ? req.body.userId : req.user._id;
 
   if (
     !mongoose.Types.ObjectId.isValid(userId) ||
@@ -325,36 +338,92 @@ export const returnItem = async (req, res) => {
       return res.status(404).json({ error: "Instance not found" });
     }
 
-    if (instance.status !== "borrowed") {
+    if (instance.status !== "Borrowed") {
       return res.status(400).json({ error: "Instance is not borrowed" });
     }
 
     const usageLog = await UsageLog.findOne({
       user: userId,
       item: itemId,
-      serialNumbers: serialForReturn,
-      action: "borrowed",
+      serialNumbers: [serialForReturn],
+      action: "Borrowed",
     });
 
     if (!usageLog) {
       return res.status(400).json({ error: "No active borrow record found" });
     }
 
-    instance.status = "available";
-    item.availableQuantity++;
-    await item.save();
-
     const returnedUsageLog = new UsageLog({
       user: userId,
       item: itemId,
-      serialNumbers,
-      action: "returned",
+      serialNumbers: [serialForReturn],
+      action: "Returned",
     });
+
+    instance.status = "Available";
+    item.availableQuantity++;
+
+    await item.save();
     await returnedUsageLog.save();
 
     res.status(200).json({ message: "Item returned successfully", instance });
   } catch (error) {
     console.error("Error returning item:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const getTotalItemCount = async (req, res) => {
+  try {
+    const totalItems = await Item.countDocuments();
+    res.status(200).json(totalItems);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to get total item count" });
+  }
+};
+
+export const getRecentAddedItems = async (req, res) => {
+  try {
+    const limit = parseInt(req.params.count, 10); // number of items to fetch
+
+    const allItems = await Item.aggregate([
+      {
+        $sort: {
+          _id: -1,
+        },
+      },
+      { $limit: limit },
+    ]);
+    res.json(allItems);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch recent used items" });
+  }
+};
+
+export const getInstanceDetails = async (req, res) => {
+  const { itemId, serialNumber } = req.params;
+
+  try {
+    const item = await Item.findById(itemId);
+
+    if (!item) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+
+    const instance = item.instances.find(
+      (inst) => inst.serialNumber === serialNumber
+    );
+
+    if (!instance) {
+      return res.status(404).json({ message: "Instance not found" });
+    }
+
+    return res.status(200).json({
+      item,
+      instance,
+    });
+  } catch (error) {
+    console.error("Error fetching instance details:", error);
+    return res.status(500).json({ message: "Server error" });
   }
 };

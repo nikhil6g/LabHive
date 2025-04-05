@@ -10,18 +10,23 @@ import {
   updateStatus,
   allocateItem,
   returnItem,
+  getTotalItemCount,
+  getRecentAddedItems,
+  getInstanceDetails,
 } from "../controllers/item.controller.js";
 
 const router = express.Router();
 
-router.put("/instances/:serialNumber", protectRoute, adminOnly, updateStatus);
-router.post("/:itemId/allocate", protectRoute, adminOnly, allocateItem);
-router.post(
-  "/instances/:serialForReturn/return",
+router.get(
+  "/:itemId/instances/:serialNumber",
   protectRoute,
-  adminOnly,
-  returnItem
+  getInstanceDetails
 );
+router.put("/instances/:serialNumber", protectRoute, adminOnly, updateStatus);
+router.post("/:itemId/allocate", protectRoute, allocateItem);
+router.post("/instances/:serialForReturn/return", protectRoute, returnItem);
+router.get("/recent/:count", protectRoute, getRecentAddedItems);
+router.get("/total", protectRoute, getTotalItemCount);
 router.post("/add", protectRoute, adminOnly, addNewItem);
 router.get("/grouped-by-status", item_by_status);
 router.get("/grouped-by-category", item_by_category);

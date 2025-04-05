@@ -40,3 +40,10 @@ export interface appProps {
   displayError(message: string): void;
   toggleLoader(switchOn: Boolean): void;
 }
+
+export type ApiError = Error & {
+  response?: Response;
+  data?: {
+    error?: string;
+  };
+};

@@ -31,7 +31,7 @@ export default function Items({
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        router.replace("/login");
+        router.push("/login");
         return;
       }
       const res = await fetch(`${backendURL}/api/items/`, {

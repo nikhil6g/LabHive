@@ -61,12 +61,17 @@ export default function ItemPage({ backendURL, displayError }: appProps) {
   const [userId, setUserId] = useState("");
 
   const downloadQRCode = (serialNumber: string, itemId: string) => {
+    const env = process.env.NODE_ENV;
+    const FRONTEND_URL =
+      env === "development"
+        ? window.location.origin
+        : "https://invento-backend.onrender.com";
     const qrSize = 256;
 
     // Create QR code directly on the canvas
     const qr = (
       <QRCodeCanvas
-        value={`http://localhost:3000/${itemId}/${serialNumber}`}
+        value={`${FRONTEND_URL}/instance/${itemId}/${serialNumber}`}
         size={qrSize}
         level="H"
       />
@@ -185,7 +190,7 @@ export default function ItemPage({ backendURL, displayError }: appProps) {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        router.replace("/login");
+        router.push("/login");
       }
       const res = await fetch(`${backendURL}/api/auth/profile`, {
         method: "GET",
@@ -216,7 +221,7 @@ export default function ItemPage({ backendURL, displayError }: appProps) {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        router.replace("/login");
+        router.push("/login");
       }
       const res = await fetch(`${backendURL}/api/items/${id}`, {
         method: "GET",

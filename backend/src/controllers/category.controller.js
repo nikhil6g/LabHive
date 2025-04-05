@@ -92,3 +92,12 @@ export const fetch_category = async (req, res) => {
     res.status(500).json({ error: "Server error." });
   }
 };
+
+export const getTotalCategoryCount = async (req, res) => {
+  try {
+    const categoriesTotal = await Category.countDocuments();
+    res.status(200).json(categoriesTotal);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to get total category count" });
+  }
+};

@@ -6,10 +6,10 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const user = localStorage.getItem("user");
-    console.log(user);
-    if (!user) {
-      router.replace("/login"); // Redirect to Login if no user data
+    const token = localStorage.getItem("token");
+    console.log(token);
+    if (!token) {
+      router.push("/login"); // Redirect to Login if no user data
     } else {
       setIsAuthenticated(true);
       router.replace("/home");
