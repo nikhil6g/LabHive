@@ -1,0 +1,10 @@
+.card {
+  width: 250px;
+  height: 220px;
+  display: grid;
+  place-items: center;
+}
+
+.card:hover {
+  background-color: var(--mantine-color-dark-5);
+}
