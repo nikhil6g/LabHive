@@ -27,6 +27,12 @@ interface User {
 
 export default function HeaderMegaMenu() {
   const pathname = usePathname(); // Get current page URL
+
+  // Hide navbar when user is on login or signup page
+  if (pathname === "/login" || pathname === "/signup") {
+    return null;
+  }
+
   const router = useRouter(); // Next.js router for navigation
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -56,16 +62,12 @@ export default function HeaderMegaMenu() {
       console.log(`Error occured ${error.message}`);
     }
   }
+
   useEffect(() => {
     const token = localStorage.getItem("token"); // Check login state
     setIsLoggedIn(!!token);
     fetchUserDetails();
   }, []);
-
-  // Hide navbar when user is on login or signup page
-  if (pathname === "/login" || pathname === "/signup") {
-    return null;
-  }
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -80,20 +82,24 @@ export default function HeaderMegaMenu() {
           { text: "Signup", href: "/signup" },
         ]),
     ...(user && user.role !== "Admin"
-      ? []
+      ? [{
+          text: "Dashboard",
+          href: "/dashboard",
+        }]
       : [
           { text: "Home", href: "/home" },
           { text: "Usage", href: "/usage-logs" },
         ]),
-
     { text: "Items", href: "/items" },
     { text: "Categories", href: "/categories" },
   ];
+
   const linkComponents = links.map((e) => (
     <a href={e.href} key={`tab-link-${e.text}`} className={classes.link}>
       {e.text}
     </a>
   ));
+
   const [drawerOpened, { toggle: toggleDrawer, close: closeDrawer }] =
     useDisclosure(false);
 
@@ -148,7 +154,7 @@ export default function HeaderMegaMenu() {
         size="100%"
         padding="md"
         title="Navigation"
-        hiddenFrom="sm"
+        hiddenFrom="sm" 
         zIndex={1000000}
       >
         <ScrollArea h={`calc(100vh - ${rem(80)})`} mx="-md">

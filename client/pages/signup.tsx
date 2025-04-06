@@ -15,6 +15,7 @@ export default function Signup({
   const [password, setPassword] = useState("");
 
   async function handleSignup() {
+    toggleLoader(true);
     try {
       const res = await fetch(backendURL + "/api/auth/signup", {
         method: "POST",
@@ -29,12 +30,34 @@ export default function Signup({
       }
 
       const jsonObj = await res.json();
-      localStorage.setItem("token", jsonObj.token); // Store user data in localStorage
+      localStorage.setItem("token", jsonObj.token); // Store token in localStorage
 
-      router.push("/home"); // Redirect after signup
+      // After signup success, fetch user profile to determine role
+      const profileRes = await fetch(backendURL + "/api/auth/profile", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jsonObj.token}`, 
+        },
+      });
+
+      if (!profileRes.ok) {
+        throw new Error("Failed to fetch user profile");
+      }
+
+      const userData = await profileRes.json();
+      
+      // Redirect based on user role
+      if (userData.role === "Admin") {
+        router.push("/home"); // Admin goes to home page
+      } else {
+        router.push("/dashboard"); // Non-admin goes to dashboard
+      }
     } catch (error) {
       console.error("Error during signup:", error);
-      alert("Signup failed. Please check your credentials.");
+      displayError("Signup failed. Please check your information.");
+    } finally {
+      toggleLoader(false);
     }
   }
 

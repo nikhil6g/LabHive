@@ -31,10 +31,6 @@ export default function ItemForm({ backendURL, displayError }: appProps) {
     if (editMode) {
       // edit item mode
       const item = JSON.parse(router.query.item as string);
-      // Set the image URL if it exists
-      if (item.image) {
-        setImageUrl(item.image);
-      }
       return item;
     }
 
@@ -53,6 +49,16 @@ export default function ItemForm({ backendURL, displayError }: appProps) {
 
     return initialItem;
   }
+
+  // Set the image URL separately when router.query.item changes
+  useEffect(() => {
+    if (editMode && router.query.item) {
+      const item = JSON.parse(router.query.item as string);
+      if (item.image) {
+        setImageUrl(item.image);
+      }
+    }
+  }, [router.query.item, editMode]);
 
   function getCategoryNames() {
     return categories.map((e: Category) => e.name);
@@ -162,7 +168,7 @@ export default function ItemForm({ backendURL, displayError }: appProps) {
   async function submitItem(e: SyntheticEvent) {
     const createURL = `${backendURL}/api/items/add`;
     const editURL = editMode
-      ? `${backendURL}/item/${
+      ? `${backendURL}/api/items/${
           JSON.parse(router.query.item as string)._id
         }/update`
       : "";

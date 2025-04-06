@@ -13,6 +13,7 @@ import {
   getTotalItemCount,
   getRecentAddedItems,
   getInstanceDetails,
+  updateItem, // Add this import
 } from "../controllers/item.controller.js";
 
 const router = express.Router();
@@ -31,6 +32,8 @@ router.post("/add", protectRoute, adminOnly, addNewItem);
 router.get("/grouped-by-status", item_by_status);
 router.get("/grouped-by-category", item_by_category);
 router.post("/inc/:id", protectRoute, adminOnly, incrementInstances);
+// Add the missing update route
+router.post("/:id/update", protectRoute, adminOnly, updateItem);
 router.get("/", protectRoute, getAllItems);
 router.get("/:id", protectRoute, getItem);
 
