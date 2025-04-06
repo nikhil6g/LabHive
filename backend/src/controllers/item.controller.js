@@ -168,33 +168,33 @@ export const item_by_status = async (req, res) => {
 
 export const item_by_category = async (req, res, next) => {
   try {
-    // Group items based on their category field
-    const groupItemsByCategory = await Item.aggregate([
-      {
-        $lookup: {
-          from: "categories",
-          localField: "category",
-          foreignField: "_id",
-          as: "category",
-        },
-      },
+    const grouped = await Item.aggregate([
       {
         $group: {
-          _id: "$category.name",
+          _id: "$category",
           totalItems: { $sum: "$totalQuantity" },
         },
       },
       {
+        $lookup: {
+          from: "categories",
+          localField: "_id",
+          foreignField: "_id",
+          as: "categoryInfo",
+        },
+      },
+      { $unwind: "$categoryInfo" },
+      {
         $project: {
           _id: 0,
-          category: { $first: "$_id" },
+          category: "$categoryInfo.name",
           totalItems: 1,
         },
       },
       { $sort: { totalItems: -1 } },
     ]);
-
-    res.json(groupItemsByCategory);
+    console.log(grouped);
+    res.json(grouped);
   } catch (error) {
     console.error("Error grouping items by category:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -432,28 +432,29 @@ export const updateItem = async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
-    
+
     // Find item by ID
     const item = await Item.findById(id);
     if (!item) {
       return res.status(404).json({ message: "Item not found" });
     }
-    
+
     // Update item fields
     item.name = updateData.name || item.name;
     item.description = updateData.description || item.description;
     item.category = updateData.category || item.category;
-    item.lowStockThreshold = updateData.lowStockThreshold || item.lowStockThreshold;
+    item.lowStockThreshold =
+      updateData.lowStockThreshold || item.lowStockThreshold;
     item.totalQuantity = updateData.totalQuantity || item.totalQuantity;
-    
+
     // Only update image if provided
     if (updateData.image) {
       item.image = updateData.image;
     }
-    
+
     // Save the updated item
     await item.save();
-    
+
     return res.status(200).json({ message: "Item updated successfully", item });
   } catch (error) {
     console.error("Error updating item:", error);
